@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = '/api';
 
 export interface Expense {
   id?: string;

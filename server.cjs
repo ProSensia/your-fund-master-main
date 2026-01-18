@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -8,6 +9,9 @@ const port = process.env.API_PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+
+// Serve React static files from dist folder
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // MySQL connection pool with timeouts
 const pool = mysql.createPool({
@@ -21,7 +25,6 @@ const pool = mysql.createPool({
   queueLimit: 0,
   connectTimeout: 10000,
   enableKeepAlive: true,
-  keepAliveInitialDelayMs: 0,
 });
 
 // Test connection
@@ -233,8 +236,18 @@ app.get('/api/dashboard', async (req, res) => {
   }
 });
 
+// Serve index.html for all non-API routes (React Router)
+app.use((req, res, next) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  } else {
+    next();
+  }
+});
+
 app.listen(port, () => {
   console.log(`\n✅ API Server Running on http://localhost:${port}`);
   console.log(`📊 Database: prosdfwo_Expenses @ premium281.web-hosting.com`);
-  console.log(`\n🌐 Frontend should connect to: http://localhost:${port}/api\n`);
+  console.log(`\n🌐 Frontend: http://localhost:${port}`);
+  console.log(`🌐 API: http://localhost:${port}/api\n`);
 });
