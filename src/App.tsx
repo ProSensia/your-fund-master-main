@@ -33,4 +33,13 @@ const App = () => {
           <Route path="/funds" element={<Funds />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/personal" element={<Personal />} />
-          <Rou
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+  );
+};
+
+export default App;
