@@ -1,15 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const API_BASE_URL = 'http://localhost:3001/api';
+
 export interface Expense {
-  id: string;
+  id?: string;
   description: string;
   amount: number;
   category: string;
   date: string;
-  billImage?: string;
+  bill_image?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 // Fetch all expenses
@@ -17,18 +19,12 @@ export const useExpenses = () => {
   return useQuery({
     queryKey: ['expenses'],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from('expenses')
-        .select('*')
-        .order('date', { ascending: false }) as any);
-
-      if (error) {
-        console.error('Error fetching expenses:', error);
-        throw error;
-      }
-
-      return data || [];
+      const response = await fetch(`${API_BASE_URL}/expenses`);
+      if (!response.ok) throw new Error('Failed to fetch expenses');
+      const result = await response.json();
+      return result.data || [];
     },
+    staleTime: 5000,
   });
 };
 
@@ -37,70 +33,23 @@ export const useAddExpense = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (expense: Omit<Expense, 'id' | 'created_at'>) => {
-      const { data, error } = await (supabase
-        .from('expenses')
-        .insert([
-          {
-            description: expense.description,
-            amount: expense.amount,
-            category: expense.category,
-            date: expense.date,
-            bill_image: expense.billImage,
-          },
-        ])
-        .select() as any);
-
-      if (error) {
-        console.error('Error adding expense:', error);
-        throw error;
-      }
-
-      return data?.[0];
+    mutationFn: async (expense: Omit<Expense, 'id' | 'created_at' | 'updated_at'>) => {
+      const response = await fetch(`${API_BASE_URL}/expenses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(expense),
+      });
+      if (!response.ok) throw new Error('Failed to add expense');
+      const result = await response.json();
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Expense added successfully');
     },
-    onError: (error) => {
-      console.error('Failed to add expense:', error);
+    onError: () => {
       toast.error('Failed to add expense');
-    },
-  });
-};
-
-// Update expense
-export const useUpdateExpense = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, ...expense }: Expense) => {
-      const { data, error } = await (supabase
-        .from('expenses')
-        .update({
-          description: expense.description,
-          amount: expense.amount,
-          category: expense.category,
-          date: expense.date,
-          bill_image: expense.billImage,
-        })
-        .eq('id', id)
-        .select() as any);
-
-      if (error) {
-        console.error('Error updating expense:', error);
-        throw error;
-      }
-
-      return data?.[0];
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['expenses'] });
-      toast.success('Expense updated successfully');
-    },
-    onError: (error) => {
-      console.error('Failed to update expense:', error);
-      toast.error('Failed to update expense');
     },
   });
 };
@@ -111,22 +60,18 @@ export const useDeleteExpense = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase
-        .from('expenses')
-        .delete()
-        .eq('id', id) as any);
-
-      if (error) {
-        console.error('Error deleting expense:', error);
-        throw error;
-      }
+      const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete expense');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Expense deleted successfully');
     },
-    onError: (error) => {
-      console.error('Failed to delete expense:', error);
+    onError: () => {
       toast.error('Failed to delete expense');
     },
   });

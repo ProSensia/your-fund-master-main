@@ -11,14 +11,29 @@ import Reports from "./pages/Reports";
 import Personal from "./pages/Personal";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import { testDatabaseConnection } from "./lib/database";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Test database connection on app startup
-    testDatabaseConnection();
+    // Test API connection on app startup
+    const testConnection = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/health');
+        if (response.ok) {
+          toast.success('✅ MySQL Database Connected');
+        } else {
+          toast.error('❌ Failed to connect to database');
+        }
+      } catch (error) {
+        toast.error('❌ API server not running. Start it with: npm run server');
+        console.error('API connection error:', error);
+      }
+    };
+
+    // Small delay to let toasts stack nicely
+    setTimeout(testConnection, 500);
   }, []);
 
   return (

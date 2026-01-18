@@ -1,14 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const API_BASE_URL = 'http://localhost:3001/api';
+
 export interface Fund {
-  id: string;
+  id?: string;
   source: string;
   amount: number;
   date: string;
   description?: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 // Fetch all funds
@@ -16,18 +18,12 @@ export const useFunds = () => {
   return useQuery({
     queryKey: ['funds'],
     queryFn: async () => {
-      const { data, error } = await (supabase
-        .from('funds')
-        .select('*')
-        .order('date', { ascending: false }) as any);
-
-      if (error) {
-        console.error('Error fetching funds:', error);
-        throw error;
-      }
-
-      return data || [];
+      const response = await fetch(`${API_BASE_URL}/funds`);
+      if (!response.ok) throw new Error('Failed to fetch funds');
+      const result = await response.json();
+      return result.data || [];
     },
+    staleTime: 5000,
   });
 };
 
@@ -36,32 +32,22 @@ export const useAddFund = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (fund: Omit<Fund, 'id' | 'created_at'>) => {
-      const { data, error } = await (supabase
-        .from('funds')
-        .insert([
-          {
-            source: fund.source,
-            amount: fund.amount,
-            date: fund.date,
-            description: fund.description,
-          },
-        ])
-        .select() as any);
-
-      if (error) {
-        console.error('Error adding fund:', error);
-        throw error;
-      }
-
-      return data?.[0];
+    mutationFn: async (fund: Omit<Fund, 'id' | 'created_at' | 'updated_at'>) => {
+      const response = await fetch(`${API_BASE_URL}/funds`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fund),
+      });
+      if (!response.ok) throw new Error('Failed to add fund');
+      const result = await response.json();
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funds'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Fund added successfully');
     },
-    onError: (error) => {
-      console.error('Failed to add fund:', error);
+    onError: () => {
       toast.error('Failed to add fund');
     },
   });
@@ -73,22 +59,18 @@ export const useDeleteFund = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase
-        .from('funds')
-        .delete()
-        .eq('id', id) as any);
-
-      if (error) {
-        console.error('Error deleting fund:', error);
-        throw error;
-      }
+      const response = await fetch(`${API_BASE_URL}/funds/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete fund');
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funds'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success('Fund deleted successfully');
     },
-    onError: (error) => {
-      console.error('Failed to delete fund:', error);
+    onError: () => {
       toast.error('Failed to delete fund');
     },
   });
