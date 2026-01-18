@@ -20,33 +20,33 @@ export const useDashboardData = () => {
     queryFn: async (): Promise<DashboardData> => {
       try {
         // Fetch all expenses
-        const { data: expenses, error: expensesError } = await supabase
+        const { data: expenses, error: expensesError } = await (supabase
           .from('expenses')
-          .select('*');
+          .select('*') as any);
 
         // Fetch all funds
-        const { data: funds, error: fundsError } = await supabase
+        const { data: funds, error: fundsError } = await (supabase
           .from('funds')
-          .select('*');
+          .select('*') as any);
 
         if (expensesError || fundsError) {
           throw new Error('Failed to fetch dashboard data');
         }
 
-        const totalExpenses = (expenses || []).reduce((sum, exp) => sum + (exp.amount || 0), 0);
-        const totalFunds = (funds || []).reduce((sum, fund) => sum + (fund.amount || 0), 0);
+        const totalExpenses = (expenses || []).reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0);
+        const totalFunds = (funds || []).reduce((sum: number, fund: any) => sum + (fund.amount || 0), 0);
         const balance = totalFunds - totalExpenses;
 
         // Combine and sort recent transactions
         const recentTransactions = [
-          ...(expenses || []).map((exp) => ({
+          ...(expenses || []).map((exp: any) => ({
             id: exp.id,
             description: exp.description || 'Expense',
             amount: -(exp.amount || 0),
             date: exp.date || '',
             type: 'expense' as const,
           })),
-          ...(funds || []).map((fund) => ({
+          ...(funds || []).map((fund: any) => ({
             id: fund.id,
             description: fund.source || 'Fund',
             amount: fund.amount || 0,

@@ -4,35 +4,35 @@ import { toast } from 'sonner';
 export const initializeTables = async () => {
   try {
     // Check if tables exist by trying to query them
-    const { data: expensesCheck, error: expensesError } = await supabase
+    const { data: expensesCheck, error: expensesError } = await (supabase
       .from('expenses')
-      .select('count(*)', { count: 'exact', head: true });
+      .select('count(*)', { count: 'exact', head: true }) as any);
 
-    const { data: fundsCheck, error: fundsError } = await supabase
+    const { data: fundsCheck, error: fundsError } = await (supabase
       .from('funds')
-      .select('count(*)', { count: 'exact', head: true });
+      .select('count(*)', { count: 'exact', head: true }) as any);
 
     if (expensesError && fundsError) {
       console.warn('Database tables may not exist. Creating them...');
       
       // Create expenses table
-      const { error: createExpensesError } = await supabase
+      const { error: createExpensesError } = await (supabase
         .from('expenses')
         .insert([{
           description: 'Initialize',
           amount: 0,
           category: 'Init',
           date: new Date().toISOString().split('T')[0],
-        }]);
+        }]) as any);
 
       // Create funds table
-      const { error: createFundsError } = await supabase
+      const { error: createFundsError } = await (supabase
         .from('funds')
         .insert([{
           source: 'Initialize',
           amount: 0,
           date: new Date().toISOString().split('T')[0],
-        }]);
+        }]) as any);
 
       console.log('Tables initialized');
     }
@@ -46,9 +46,9 @@ export const initializeTables = async () => {
 
 export const testDatabaseConnection = async () => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase
       .from('expenses')
-      .select('count(*)', { count: 'exact', head: true });
+      .select('count(*)', { count: 'exact', head: true }) as any);
 
     if (error) {
       console.error('Database connection error:', error);

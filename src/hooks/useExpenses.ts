@@ -17,10 +17,10 @@ export const useExpenses = () => {
   return useQuery({
     queryKey: ['expenses'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('expenses')
         .select('*')
-        .order('date', { ascending: false });
+        .order('date', { ascending: false }) as any);
 
       if (error) {
         console.error('Error fetching expenses:', error);
@@ -38,7 +38,7 @@ export const useAddExpense = () => {
 
   return useMutation({
     mutationFn: async (expense: Omit<Expense, 'id' | 'created_at'>) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('expenses')
         .insert([
           {
@@ -49,7 +49,7 @@ export const useAddExpense = () => {
             bill_image: expense.billImage,
           },
         ])
-        .select();
+        .select() as any);
 
       if (error) {
         console.error('Error adding expense:', error);
@@ -75,7 +75,7 @@ export const useUpdateExpense = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...expense }: Expense) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('expenses')
         .update({
           description: expense.description,
@@ -85,7 +85,7 @@ export const useUpdateExpense = () => {
           bill_image: expense.billImage,
         })
         .eq('id', id)
-        .select();
+        .select() as any);
 
       if (error) {
         console.error('Error updating expense:', error);
@@ -111,10 +111,10 @@ export const useDeleteExpense = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase
         .from('expenses')
         .delete()
-        .eq('id', id);
+        .eq('id', id) as any);
 
       if (error) {
         console.error('Error deleting expense:', error);

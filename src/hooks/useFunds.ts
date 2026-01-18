@@ -16,10 +16,10 @@ export const useFunds = () => {
   return useQuery({
     queryKey: ['funds'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('funds')
         .select('*')
-        .order('date', { ascending: false });
+        .order('date', { ascending: false }) as any);
 
       if (error) {
         console.error('Error fetching funds:', error);
@@ -37,7 +37,7 @@ export const useAddFund = () => {
 
   return useMutation({
     mutationFn: async (fund: Omit<Fund, 'id' | 'created_at'>) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase
         .from('funds')
         .insert([
           {
@@ -47,7 +47,7 @@ export const useAddFund = () => {
             description: fund.description,
           },
         ])
-        .select();
+        .select() as any);
 
       if (error) {
         console.error('Error adding fund:', error);
@@ -73,10 +73,10 @@ export const useDeleteFund = () => {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase
         .from('funds')
         .delete()
-        .eq('id', id);
+        .eq('id', id) as any);
 
       if (error) {
         console.error('Error deleting fund:', error);

@@ -92,6 +92,19 @@ const Funds = () => {
     return colors[source] || colors.Other;
   };
 
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-muted rounded w-32 mb-4"></div>
+            <div className="h-4 bg-muted rounded w-64"></div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -118,7 +131,7 @@ const Funds = () => {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="source">Source</Label>
+                  <Label htmlFor="source">Source *</Label>
                   <select
                     id="source"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -131,7 +144,7 @@ const Funds = () => {
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     placeholder="Details about this fund..."
@@ -173,8 +186,12 @@ const Funds = () => {
                     </p>
                   </div>
                 </div>
-                <Button onClick={handleAddFund} className="w-full gradient-success text-success-foreground">
-                  Add Fund
+                <Button 
+                  onClick={handleAddFund} 
+                  className="w-full gradient-success text-success-foreground"
+                  disabled={isAdding}
+                >
+                  {isAdding ? "Adding..." : "Add Fund"}
                 </Button>
               </div>
             </DialogContent>
@@ -232,7 +249,7 @@ const Funds = () => {
                     </div>
                     <div>
                       <p className="font-medium text-foreground">{fund.source}</p>
-                      <p className="text-sm text-muted-foreground">{fund.description}</p>
+                      <p className="text-sm text-muted-foreground">{fund.description || "No description"}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <Badge variant="secondary" className={getSourceColor(fund.source)}>
                           {fund.source}
@@ -253,11 +270,6 @@ const Funds = () => {
                       +{formatPKR(fund.amount)}
                     </p>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {fund.documentImage && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      )}
                       <Button 
                         variant="ghost" 
                         size="icon" 
