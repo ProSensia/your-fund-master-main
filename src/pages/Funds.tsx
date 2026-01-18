@@ -27,27 +27,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatPKR } from "@/lib/formatCurrency";
 import { toast } from "sonner";
-
-interface Fund {
-  id: number;
-  source: string;
-  description: string;
-  amount: number;
-  date: string;
-  documentImage?: string;
-}
-
-const mockFunds: Fund[] = [
-  { id: 1, source: "Investor - Ali Khan", description: "Seed funding round 1", amount: 50000, date: "2024-01-14", documentImage: "/placeholder.svg" },
-  { id: 2, source: "Project Payment", description: "Client milestone payment", amount: 70000, date: "2024-01-10", documentImage: "/placeholder.svg" },
-  { id: 3, source: "Personal Investment", description: "Self-investment for equipment", amount: 25000, date: "2024-01-05" },
-  { id: 4, source: "Grant", description: "Government startup grant", amount: 100000, date: "2024-01-01", documentImage: "/placeholder.svg" },
-];
+import { useFunds, useAddFund, useDeleteFund } from "@/hooks/useFunds";
 
 const sources = ["Investor", "Project Payment", "Personal Investment", "Grant", "Loan", "Other"];
 
 const Funds = () => {
-  const [funds, setFunds] = useState<Fund[]>(mockFunds);
+  const { data: funds = [], isLoading } = useFunds();
+  const { mutate: addFund, isPending: isAdding } = useAddFund();
+  const { mutate: deleteFund } = useDeleteFund();
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [newFund, setNewFund] = useState({
@@ -58,40 +46,38 @@ const Funds = () => {
   });
 
   const filteredFunds = funds.filter(fund =>
-    fund.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    fund.description.toLowerCase().includes(searchTerm.toLowerCase())
+    (fund.source || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (fund.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalFunds = funds.reduce((sum, fund) => sum + fund.amount, 0);
+  const totalFunds = funds.reduce((sum, fund) => sum + (fund.amount || 0), 0);
 
   const handleAddFund = () => {
-    if (!newFund.description || !newFund.amount) {
+    if (!newFund.source || !newFund.amount) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const fund: Fund = {
-      id: Date.now(),
+    addFund({
       source: newFund.source,
-      description: newFund.description,
+      description: newFund.description || undefined,
       amount: parseFloat(newFund.amount),
       date: newFund.date,
-    };
-
-    setFunds([fund, ...funds]);
-    setNewFund({
-      source: "Other",
-      description: "",
-      amount: "",
-      date: new Date().toISOString().split('T')[0],
+    }, {
+      onSuccess: () => {
+        setNewFund({
+          source: "Other",
+          description: "",
+          amount: "",
+          date: new Date().toISOString().split('T')[0],
+        });
+        setIsAddDialogOpen(false);
+      },
     });
-    setIsAddDialogOpen(false);
-    toast.success("Fund added successfully!");
   };
 
-  const handleDeleteFund = (id: number) => {
-    setFunds(funds.filter(f => f.id !== id));
-    toast.success("Fund entry deleted");
+  const handleDeleteFund = (id: string) => {
+    deleteFund(id);
   };
 
   const getSourceColor = (source: string) => {
